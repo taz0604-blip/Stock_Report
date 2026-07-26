@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#E8EBEE">
+<title>미장 마감 보고서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E8EBEE;
+    --surface:#F4F6F8;
+    --ink:#16202B;
+    --ink-soft:#5A6875;
+    --ink-faint:#8B97A3;
+    --rule:#CFD6DD;
+    --up:#1D7A5F;
+    --down:#B23A3A;
+    --mark:#33487F;
+    --pad:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans KR",system-ui,sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    padding:var(--pad);
+    max-width:720px;
+    margin:0 auto;
+  }
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+  /* ── 헤더 ───────────────────────────── */
+  .masthead{padding:12px 0 22px;border-bottom:1px solid var(--ink);margin-bottom:26px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  }
+  .masthead h1{
+    font-size:clamp(28px,7vw,40px);font-weight:600;letter-spacing:-.02em;
+    line-height:1.15;margin-top:8px;
+  }
+  .masthead .sub{font-size:13px;color:var(--ink-soft);margin-top:6px}
+  .badge{
+    display:inline-block;padding:2px 8px;border-radius:3px;
+    background:var(--mark);color:#fff;font-size:10px;letter-spacing:.1em;
+  }
+  .badge[hidden]{display:none}
+
+  /* ── 종목 블록 ──────────────────────── */
+  .stock{
+    background:var(--surface);
+    border-left:3px solid var(--rule);
+    border-radius:0 8px 8px 0;
+    padding:18px 18px 16px;
+    margin-bottom:14px;
+    opacity:0;transform:translateY(8px);
+    animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  .stock.is-up{border-left-color:var(--up)}
+  .stock.is-down{border-left-color:var(--down)}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .stock{animation:none;opacity:1;transform:none}
+    .runway-dot{transition:none !important}
+  }
+
+  .stock-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+  .sym{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;letter-spacing:.06em}
+  .nm{font-size:12px;color:var(--ink-soft);margin-top:1px}
+  .px{text-align:right;white-space:nowrap}
+  .px .val{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
+  .chg{
+    font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;
+    margin-top:2px;font-variant-numeric:tabular-nums;
+  }
+  .chg.up{color:var(--up)}
+  .chg.down{color:var(--down)}
+  .chg.flat{color:var(--ink-soft)}
+
+  /* ── 목표가 레인지 (시그니처) ────────── */
+  .range{margin:20px 0 6px}
+  .range-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:11px;color:var(--ink-soft);margin-bottom:14px;
+  }
+  .range-head .gap{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--ink)}
+  .runway{position:relative;height:34px}
+  .runway-line{
+    position:absolute;top:9px;left:0;right:0;height:2px;background:var(--rule);border-radius:2px;
+  }
+  .runway-cap{position:absolute;top:4px;width:2px;height:12px;background:var(--ink-faint)}
+  .runway-avg{position:absolute;top:2px;width:1px;height:16px;background:var(--ink-soft)}
+  .runway-dot{
+    position:absolute;top:4px;width:12px;height:12px;border-radius:50%;
+    background:var(--mark);border:2px solid var(--surface);
+    margin-left:-6px;
+    transition:left .7s cubic-bezier(.2,.7,.3,1);
+  }
+  .runway-lbl{
+    position:absolute;top:20px;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;color:var(--ink-soft);white-space:nowrap;
+  }
+  .runway-lbl.mid{transform:translateX(-50%)}
+  .runway-lbl.hi{right:0}
+  .range-src{font-size:10px;color:var(--ink-faint);margin-top:16px}
+
+  /* ── 뉴스 ───────────────────────────── */
+  .news{margin-top:16px;border-top:1px solid var(--rule);padding-top:12px}
+  .news-item{display:flex;gap:11px;padding:6px 0;font-size:14px;line-height:1.55}
+  .news-rank{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    color:var(--mark);flex-shrink:0;padding-top:4px;
+  }
+  .news-item a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+  .news-item a:hover{border-bottom-color:var(--ink)}
+  .news-item a:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+  .news-src{font-size:11px;color:var(--ink-faint);margin-left:6px;white-space:nowrap}
+
+  footer{
+    margin-top:28px;padding-top:16px;border-top:1px solid var(--rule);
+    font-size:11px;color:var(--ink-faint);line-height:1.7;
+  }
+  .state{padding:40px 0;text-align:center;color:var(--ink-soft);font-size:14px}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>미국 정규장 마감</span>
+    <span class="badge" id="sampleBadge" hidden>예시 데이터</span>
+  </div>
+  <h1 id="asOf">불러오는 중</h1>
+  <div class="sub" id="genAt"></div>
+</header>
+
+<main id="list"><div class="state">보고서를 불러오고 있습니다.</div></main>
+
+<footer id="foot"></footer>
+
+<script>
+// ───────────────────────────────────────────────────────────
+// 예시 데이터 — report.json 을 못 찾을 때만 화면에 쓰입니다.
+// 실제 시세가 아니라 형식 확인용 숫자입니다.
+// ───────────────────────────────────────────────────────────
+const SAMPLE = {
+  as_of: "2026-07-24",
+  generated_at: "2026-07-25 08:04 KST",
+  tickers: [
+    { ticker:"NVDA", name:"엔비디아", close:182.34, change_pct:-1.24,
+      target:{low:150, avg:212, high:275, source:"예시"},
+      news:[
+        {headline:"블랙웰 후속 라인업 양산 일정이 앞당겨졌다는 공급망 보도", source:"예시"},
+        {headline:"주요 클라우드 3사 하반기 AI 설비투자 가이던스 상향", source:"예시"},
+        {headline:"중국 수출 라이선스 관련 추가 심사 소식에 장중 약세", source:"예시"}
+      ]},
+    { ticker:"MSFT", name:"마이크로소프트", close:498.10, change_pct:0.62,
+      target:{low:420, avg:545, high:640, source:"예시"},
+      news:[
+        {headline:"애저 성장률 컨센서스 상회 전망에 목표가 줄상향", source:"예시"},
+        {headline:"코파일럿 기업 좌석 수 분기 순증 최대치 기록", source:"예시"},
+        {headline:"데이터센터 임차 계약 축소설에 대해 회사 측 부인", source:"예시"}
+      ]},
+    { ticker:"AAPL", name:"애플", close:233.77, change_pct:-0.31,
+      target:{low:190, avg:245, high:300, source:"예시"},
+      news:[
+        {headline:"신제품 출하 지연 관측에 부품사 주가 동반 약세", source:"예시"},
+        {headline:"서비스 부문 매출 사상 최고치 경신 전망", source:"예시"},
+        {headline:"유럽 규제 과징금 관련 항소심 일정 확정", source:"예시"}
+      ]},
+    { ticker:"AMD", name:"AMD", close:171.05, change_pct:2.88,
+      target:{low:130, avg:198, high:250, source:"예시"},
+      news:[
+        {headline:"신형 가속기 대형 고객사 채택 소식에 급등", source:"예시"},
+        {headline:"데이터센터 GPU 점유율 확대 전망 리포트 발간", source:"예시"},
+        {headline:"파운드리 선단 공정 물량 확보 협의 진행", source:"예시"}
+      ]},
+    { ticker:"AVGO", name:"브로드컴", close:289.42, change_pct:1.15,
+      target:{low:240, avg:315, high:390, source:"예시"},
+      news:[
+        {headline:"커스텀 AI 칩 신규 고객 추가 확보 언급", source:"예시"},
+        {headline:"네트워킹 부문 수주 잔고 증가 지속", source:"예시"},
+        {headline:"소프트웨어 부문 마진 개선 속도 시장 예상 상회", source:"예시"}
+      ]}
+  ]
+};
+
+const $ = id => document.getElementById(id);
+const fmtNum = n => Number(n).toLocaleString("ko-KR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtInt = n => Math.round(Number(n)).toLocaleString("ko-KR");
+
+function fmtDate(iso){
+  const d = new Date(iso + "T00:00:00");
+  if (isNaN(d)) return iso;
+  const days = ["일","월","화","수","목","금","토"];
+  return `${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+}
+
+function pctText(p){
+  const n = Number(p);
+  const arrow = n > 0 ? "▲" : n < 0 ? "▼" : "―";
+  return `${arrow} ${Math.abs(n).toFixed(2)}%`;
+}
+
+function renderStock(s, i){
+  const chg = Number(s.change_pct);
+  const dir = chg > 0 ? "up" : chg < 0 ? "down" : "flat";
+
+  const el = document.createElement("article");
+  el.className = "stock" + (dir === "flat" ? "" : ` is-${dir}`);
+  el.style.animationDelay = (i * 70) + "ms";
+
+  // 목표가 레인지 — 종가가 애널리스트 목표 범위 안에서 어디 있는지
+  let rangeHtml = "";
+  const t = s.target || {};
+  if (t.low != null && t.high != null && Number(t.high) > Number(t.low)) {
+    const low = Number(t.low), high = Number(t.high);
+    const raw = (Number(s.close) - low) / (high - low) * 100;
+    const pos = Math.min(100, Math.max(0, raw));
+    const avgPos = t.avg != null
+      ? Math.min(100, Math.max(0, (Number(t.avg) - low) / (high - low) * 100))
+      : null;
+    const upside = t.avg != null
+      ? ((Number(t.avg) - Number(s.close)) / Number(s.close) * 100)
+      : null;
+
+    rangeHtml = `
+      <div class="range">
+        <div class="range-head">
+          <span>애널리스트 목표가 범위</span>
+          ${upside != null ? `<span class="gap">평균까지 ${upside >= 0 ? "+" : ""}${upside.toFixed(1)}%</span>` : ""}
+        </div>
+        <div class="runway">
+          <div class="runway-line"></div>
+          <div class="runway-cap" style="left:0"></div>
+          <div class="runway-cap" style="right:0"></div>
+          ${avgPos != null ? `<div class="runway-avg" style="left:${avgPos}%"></div>` : ""}
+          <div class="runway-dot" style="left:${pos}%" title="종가"></div>
+          <div class="runway-lbl">최저 ${fmtInt(low)}</div>
+          ${avgPos != null ? `<div class="runway-lbl mid" style="left:${avgPos}%">평균 ${fmtInt(t.avg)}</div>` : ""}
+          <div class="runway-lbl hi">최고 ${fmtInt(high)}</div>
+        </div>
+        ${t.source ? `<div class="range-src">출처 ${t.source}</div>` : ""}
+      </div>`;
+  }
+
+  const newsHtml = (s.news || []).map((n, k) => {
+    const body = n.url
+      ? `<a href="${n.url}" target="_blank" rel="noopener">${n.headline}</a>`
+      : n.headline;
+    const src = n.source ? `<span class="news-src">${n.source}</span>` : "";
+    return `<div class="news-item"><span class="news-rank">${k+1}</span><span>${body}${src}</span></div>`;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="stock-top">
+      <div>
+        <div class="sym">${s.ticker}</div>
+        <div class="nm">${s.name || ""}</div>
+      </div>
+      <div class="px">
+        <div class="val">${fmtNum(s.close)}</div>
+        <div class="chg ${dir}">${pctText(chg)}</div>
+      </div>
+    </div>
+    ${rangeHtml}
+    ${newsHtml ? `<div class="news">${newsHtml}</div>` : ""}`;
+  return el;
+}
+
+function render(data, isSample){
+  $("sampleBadge").hidden = !isSample;
+  $("asOf").textContent = fmtDate(data.as_of) + " 마감";
+  $("genAt").textContent = data.generated_at ? `보고서 작성 ${data.generated_at}` : "";
+
+  const list = $("list");
+  list.innerHTML = "";
+  (data.tickers || []).forEach((s, i) => list.appendChild(renderStock(s, i)));
+
+  $("foot").textContent = isSample
+    ? "report.json 을 찾지 못해 예시 데이터를 표시하고 있습니다. 루틴이 report.json 을 같은 폴더에 저장하면 실제 보고서로 바뀝니다."
+    : "매일 아침 자동 생성됩니다. 숫자가 비어 있으면 그날 조사에서 확인되지 않은 항목입니다.";
+}
+
+fetch("report.json", { cache: "no-store" })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(d => render(d, false))
+  .catch(() => render(SAMPLE, true));
+</script>
+</body>
+</html>
